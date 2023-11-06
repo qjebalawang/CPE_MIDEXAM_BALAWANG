@@ -43,22 +43,31 @@
     state: restarted
     enabled: yes
 
-- name: Download Kibana
-  get_url:
-    url: https://artifacts.elastic.co/downloads/kibana/kibana-8.4.3-amd64.deb
-    dest: /tmp/kibana-8.4.3-amd64.deb
-
-- name: Install Kibana
-  apt:
-    deb: /tmp/kibana-8.4.3-amd64.deb
+- name: Add Kibana APT Repository
+  apt_repository:
+    repo: "deb https://artifacts.elastic.co/packages/7.x/apt stable main"
     state: present
     update_cache: yes
 
-- name: Start Kibana service
-  service:
+- name: Import Elasticsearch GPG Key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Update APT Package Cache
+  apt:
+    update_cache: yes
+
+- name: Install Kibana
+  apt:
     name: kibana
-    state: started
+    state: present
+
+- name: Start and Enable Kibana Service
+  systemd:
+    name: kibana
     enabled: yes
+    state: started
 
 - name: Downloading Logstash
   get_url:

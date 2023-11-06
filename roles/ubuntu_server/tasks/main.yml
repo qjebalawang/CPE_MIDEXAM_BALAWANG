@@ -68,21 +68,32 @@
     name: kibana
     enabled: yes
     state: started
+- name: Add Logstash APT Repository
+  apt_repository:
+    repo: "deb https://artifacts.elastic.co/packages/7.x/apt stable main"
+    state: present
+    update_cache: yes
 
-- name: Downloading Logstash
-  get_url:
-    url: https://artifacts.elastic.co/downloads/logstash/logstash-7.8.0.rpm
-    dest: /tmp/logstash-7.8.0.rpm
-
-- name: Installing Logstash
-  yum:
-    name: /tmp/logstash-7.8.0.rpm
+- name: Import Elasticsearch GPG Key
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
     state: present
 
-- name: Starting Logstash
-  service:
+- name: Update APT Package Cache
+  apt:
+    update_cache: yes
+
+- name: Install Logstash
+  apt:
     name: logstash
-    state: restarted
+    state: present
+
+- name: Start and Enable Logstash Service
+  systemd:
+    name: logstash
+    enabled: yes
+    state: started
+
 
 - name: Installing Nagios dependencies and libraries
   apt:

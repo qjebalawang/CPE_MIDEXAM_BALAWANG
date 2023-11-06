@@ -43,18 +43,18 @@
     state: restarted
     enabled: yes
 
-- name: Downloading Kibana
+- name: Downloading kibana
   get_url:
     url: https://artifacts.elastic.co/downloads/kibana/kibana-8.4.3-x86_64.rpm
     dest: /tmp/kibana-8.4.3-x86_64.rpm
 
-- name: Installing Kibana
+- name: Installing kibana
   yum:
     name: /tmp/kibana-8.4.3-x86_64.rpm
     state: latest
     update_cache: yes
 
-- name: Start Kibana
+- name: Start kibana
   service:
     name: kibana
     state: restarted

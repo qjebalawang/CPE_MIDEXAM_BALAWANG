@@ -1,0 +1,233 @@
+---
+- name: Adding Elasticsearch GPG key
+  apt_key:
+    url: "https://packages.elastic.co/GPG-KEY-elasticsearch"
+    state: present
+
+- name: Installing apt-transport-https
+  apt:
+    name: apt-transport-https
+    state: present
+
+- name: Adding Elasticsearch APT repository
+  apt_repository:
+    repo: deb https://artifacts.elastic.co/packages/7.x/apt stable main
+    state: present
+
+- name: Installing Elasticsearch
+  apt:
+    name: elasticsearch
+    update_cache: yes
+
+- name: Configuring Elasticsearch for outside access
+  lineinfile:
+    dest: /etc/elasticsearch/elasticsearch.yml
+    regexp: '^(network.host:)'
+    line: 'network.host: 0.0.0.0'
+
+- name: Updating Elasticsearch port
+  lineinfile:
+    dest: /etc/elasticsearch/elasticsearch.yml
+    regexp: '^(http.port:)'
+    line: 'http.port: 9200'
+
+- name: Configuring cluster initial master nodes
+  lineinfile:
+    dest: /etc/elasticsearch/elasticsearch.yml
+    regexp: '^(cluster.initial_master_nodes:)'
+    line: 'cluster.initial_master_nodes: ["{{ ansible_default_ipv4.address }}"]'
+
+- name: Verifying Elasticsearch
+  service:
+    name: elasticsearch
+    state: restarted
+    enabled: yes
+
+- name: Downloading Kibana
+  get_url:
+    url: https://artifacts.elastic.co/downloads/kibana/kibana-8.4.3-x86_64.rpm
+    dest: /tmp/kibana-8.4.3-x86_64.rpm
+
+- name: Installing Kibana
+  yum:
+    name: /tmp/kibana-8.4.3-x86_64.rpm
+    state: latest
+    update_cache: yes
+
+- name: Start Kibana
+  service:
+    name: kibana
+    state: restarted
+
+- name: Downloading Logstash
+  get_url:
+    url: https://artifacts.elastic.co/downloads/logstash/logstash-7.8.0.rpm
+    dest: /tmp/logstash-7.8.0.rpm
+
+- name: Installing Logstash
+  yum:
+    name: /tmp/logstash-7.8.0.rpm
+    state: present
+
+- name: Starting Logstash
+  service:
+    name: logstash
+    state: restarted
+
+- name: Installing Nagios dependencies and libraries
+  apt:
+    name:
+      - autoconf
+      - libc6
+      - gcc
+      - make
+      - wget
+      - unzip
+      - apache2
+      - php
+      - libapache2-mod-php
+      - libgd-dev
+      - openssl
+      - libssl-dev
+      - bc
+      - gawk
+      - dc
+      - build-essential
+      - snmp
+      - libnet-snmp-perl
+      - gettext
+      - python3
+      - python3-pip
+    state: latest
+
+- name: Installing passlib Python package
+  pip:
+    name: passlib
+
+- name: Creating Nagios path directory
+  file:
+    path: ~/nagios
+    state: directory
+
+- name: Downloading Nagios
+  unarchive:
+    src: https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.6.tar.gz
+    dest: ~/nagios
+    remote_src: yes
+    mode: 0777
+
+- name: Installing InfluxDB and its dependencies
+  apt:
+    name:
+      - gcc
+      - perl
+      - wget
+      - curl
+    state: latest
+    
+- name: Install InfluxDB repository key
+  apt_key:
+    url: https://repos.influxdata.com/influxdb.key
+    state: present
+
+- name: Add InfluxDB APT repository
+  apt_repository:
+    repo: deb https://repos.influxdata.com/ubuntu {{ ansible_distribution_release }} stable
+    state: present
+
+- name: Install InfluxDB
+  apt:
+    name: influxdb
+    state: present
+      
+- name: Start and enable InfluxDB service
+  service:
+    name: influxdb
+    state: started
+    enabled: yes
+
+- name: Open InfluxDB port 8086 in the firewall
+  ufw:
+    rule: allow
+    port: 8086
+    proto: tcp
+
+- name: Installing Grafana and its dependencies
+  apt:
+    name:
+      - gcc
+      - perl
+      - wget
+      - curl
+    state: latest
+
+- name: Creating Grafana installation directory
+  file:
+    path: /opt/grafana
+    state: directory
+
+- name: Downloading Grafana
+  get_url:
+    url: https://dl.grafana.com/oss/release/grafana_8.0.3_amd64.deb
+    dest: /tmp/grafana.deb
+
+- name: Installing Grafana
+  apt:
+    deb: /tmp/grafana.deb
+    state: present
+
+- name: Starting and enabling Grafana service
+  service:
+    name: grafana-server
+    state: started
+    enabled: yes
+
+- name: Creating Prometheus installation directory
+  file:
+    path: ~/prometheus
+    state: directory
+
+- name: Installing Prometheus
+  unarchive:
+    src: /home/jhoana/Downloads/prometheus-2.47.2.linux-amd64.tar.gz
+    dest: ~/prometheus
+    mode: 0777
+    owner: root
+    group: root
+
+- name: Creating Prometheus user
+  user:
+    name: prometheus
+    system: yes
+
+- name: Starting and enabling Prometheus
+  service:
+    name: prometheus
+    state: restarted
+    enabled: yes
+
+      
+- name: Installing Apache (HTTPD) and PHP
+  apt:
+    name:
+      - apache2
+      - php
+      - libapache2-mod-php
+    state: latest
+
+- name: Installing MariaDB (MySQL) Server
+  apt:
+    name: mariadb-server
+    state: latest
+
+- name: Starting and enabling Apache (HTTPD) service
+  service:
+    name: apache2
+    state: started
+    enabled: yes
+
+- name: Starting and enabling MariaDB (MySQL) service
+  service:
+    name: mysql
+    state: started
+    enabled: yes

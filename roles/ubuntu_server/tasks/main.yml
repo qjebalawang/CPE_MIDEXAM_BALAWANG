@@ -43,21 +43,22 @@
     state: restarted
     enabled: yes
 
-- name: Downloading kibana
+- name: Download Kibana
   get_url:
-    url: https://artifacts.elastic.co/downloads/kibana/kibana-8.4.3-x86_64.rpm
-    dest: /tmp/kibana-8.4.3-x86_64.rpm
+    url: https://artifacts.elastic.co/downloads/kibana/kibana-8.4.3-amd64.deb
+    dest: /tmp/kibana-8.4.3-amd64.deb
 
-- name: Installing kibana
+- name: Install Kibana
   apt:
-    name: /tmp/kibana-8.4.3-x86_64.rpm
-    state: latest
+    deb: /tmp/kibana-8.4.3-amd64.deb
+    state: present
     update_cache: yes
 
-- name: Start kibana
+- name: Start Kibana service
   service:
     name: kibana
-    state: restarted
+    state: started
+    enabled: yes
 
 - name: Downloading Logstash
   get_url:

@@ -78,45 +78,26 @@
     name: logstash
     state: restarted
 
-- name: Installing InfluxDB and its dependencies
-  yum:
-    name:
-      - gcc
-      - perl
-      - wget
-      - curl
-    state: latest
-
-- name: Install InfluxDB repository key
-  shell: rpm --import https://repos.influxdata.com/influxdb.key
-
-- name: Add InfluxDB YUM repository
-  copy:
-    content: |
-      [influxdb]
-      name = InfluxDB Repository - RHEL $releasever
-      baseurl = https://repos.influxdata.com/rhel/$releasever/$basearch/stable
-      enabled = 1
-      gpgcheck = 1
-      gpgkey = https://repos.influxdata.com/influxdb.key
-    dest: /etc/yum.repos.d/influxdb.repo
+- name: Add InfluxDB YUM Repository
+  yum_repository:
+    name: influxdb
+    description: InfluxDB Repository
+    baseurl: https://repos.influxdata.com/rhel/7/$basearch/stable
+    gpgcheck: yes
+    gpgkey: https://repos.influxdata.com/influxdb.key
+    state: present
 
 - name: Install InfluxDB
   yum:
     name: influxdb
     state: present
 
-- name: Start and enable InfluxDB service
-  service:
+- name: Start and Enable InfluxDB Service
+  systemd:
     name: influxdb
-    state: started
     enabled: yes
+    state: started
 
-- name: Open InfluxDB port 8086 in the firewall
-  firewalld:
-    service: influxdb
-    permanent: yes
-    state: enabled
 
 - name: Add Grafana YUM Repository
   yum_repository:

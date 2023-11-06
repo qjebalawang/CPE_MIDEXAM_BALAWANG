@@ -1,27 +1,23 @@
 ---
 - name: Adding Elasticsearch GPG key
-  yum_repository:
-    name: Elasticsearch GPG Key
-    description: Elasticsearch RPM GPG Key
-    baseurl: https://artifacts.elastic.co/GPG-KEY-elasticsearch
-    gpgcheck: yes
+  yum_key:
+    url: "https://packages.elastic.co/GPG-KEY-elasticsearch"
     state: present
 
-- name: Installing yum-utils (for yum-config-manager)
+- name: Installing apt-transport-https
   yum:
-    name: yum-utils
+    name: apt-transport-https
     state: present
 
-- name: Adding Elasticsearch Yum repository
-  command: yum-config-manager --add-repo https://artifacts.elastic.co/packages/7.x/yum
-  async: 600
-  poll: 0
-  ignore_errors: yes
+- name: Adding Elasticsearch APT repository
+  yum_repository:
+    repo: deb https://artifacts.elastic.co/packages/7.x/apt stable main
+    state: present
 
 - name: Installing Elasticsearch
   yum:
     name: elasticsearch
-    state: present
+    update_cache: yes
 
 - name: Configuring Elasticsearch for outside access
   lineinfile:
@@ -47,44 +43,117 @@
     state: restarted
     enabled: yes
 
-- name: Downloading Kibana
-  get_url:
-    url: https://artifacts.elastic.co/downloads/kibana/kibana-8.4.3-x86_64.rpm
-    dest: /tmp/kibana-8.4.3-x86_64.rpm
-
-- name: Installing Kibana
-  yum:
-    name: /tmp/kibana-8.4.3-x86_64.rpm
-    state: latest
+- name: Add Kibana APT Repository
+  yum_repository:
+    repo: "deb https://artifacts.elastic.co/packages/7.x/apt stable main"
+    state: present
     update_cache: yes
 
-- name: Start Kibana
-  service:
-    name: kibana
-    state: restarted
-
-- name: Downloading Logstash
-  get_url:
-    url: https://artifacts.elastic.co/downloads/logstash/logstash-7.8.0.rpm
-    dest: /tmp/logstash-7.8.0.rpm
-
-- name: installing logstash
-  yum:
-    name: /tmp/logstash-7.8.0.rpm
+- name: Import Elasticsearch GPG Key
+  yum_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
     state: present
 
-- name: Starting Logstash
-  service:
-    name: logstash
-    state: restarted
+- name: Update YUM Package Cache
+  yum:
+    update_cache: yes
 
-- name: Add InfluxDB YUM Repository
+- name: Install Kibana
+  yum:
+    name: kibana
+    state: present
+
+- name: Start and Enable Kibana Service
+  systemd:
+    name: kibana
+    enabled: yes
+    state: started
+- name: Add Logstash APT Repository
   yum_repository:
-    name: influxdb
-    description: InfluxDB Repository
-    baseurl: https://repos.influxdata.com/rhel/7/$basearch/stable
-    gpgcheck: yes
-    gpgkey: https://repos.influxdata.com/influxdb.key
+    repo: "deb https://artifacts.elastic.co/packages/7.x/apt stable main"
+    state: present
+    update_cache: yes
+
+- name: Import Elasticsearch GPG Key
+  yum_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+
+- name: Update APT Package Cache
+  yum:
+    update_cache: yes
+
+- name: Install Logstash
+  yum:
+    name: logstash
+    state: present
+
+- name: Start and Enable Logstash Service
+  systemd:
+    name: logstash
+    enabled: yes
+    state: started
+
+
+- name: Installing Nagios dependencies and libraries
+  yum:
+    name:
+      - autoconf
+      - libc6
+      - gcc
+      - make
+      - wget
+      - unzip
+      - apache2
+      - php
+      - libapache2-mod-php
+      - libgd-dev
+      - openssl
+      - libssl-dev
+      - bc
+      - gawk
+      - dc
+      - build-essential
+      - snmp
+      - libnet-snmp-perl
+      - gettext
+      - python3
+      - python3-pip
+    state: latest
+
+- name: Installing passlib Python package
+  pip:
+    name: passlib
+
+- name: Creating Nagios path directory
+  file:
+    path: ~/nagios
+    state: directory
+
+- name: Downloading Nagios
+  unarchive:
+    src: https://github.com/NagiosEnterprises/nagioscore/archive/nagios-4.4.6.tar.gz
+    dest: ~/nagios
+    remote_src: yes
+    mode: 0777
+
+- name: Installing InfluxDB and its dependencies
+  yum:
+    name:
+      - gcc
+      - perl
+      - wget
+      - curl
+    state: latest
+
+- name: Install InfluxDB repository key
+  yum_key:
+    url: https://repos.influxdata.com/influxdb.key
+    state: present
+
+- name: Add InfluxDB APT repository
+  yum_repository:
+    repo: deb https://repos.influxdata.com/ubuntu {{ ansible_distribution_release }} stable
     state: present
 
 - name: Install InfluxDB
@@ -92,12 +161,17 @@
     name: influxdb
     state: present
 
-- name: Start and Enable InfluxDB Service
-  systemd:
+- name: Start and enable InfluxDB service
+  service:
     name: influxdb
-    enabled: yes
     state: started
+    enabled: yes
 
+- name: Open InfluxDB port 8086 in the firewall
+  ufw:
+    rule: allow
+    port: 8086
+    proto: tcp
 
 - name: Add Grafana YUM Repository
   yum_repository:

@@ -49,7 +49,7 @@
     dest: /tmp/kibana-8.4.3-x86_64.rpm
 
 - name: Installing kibana
-  yum:
+  apt:
     name: /tmp/kibana-8.4.3-x86_64.rpm
     state: latest
     update_cache: yes

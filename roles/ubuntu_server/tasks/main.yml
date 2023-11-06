@@ -125,7 +125,7 @@
       - wget
       - curl
     state: latest
-    
+
 - name: Install InfluxDB repository key
   apt_key:
     url: https://repos.influxdata.com/influxdb.key
@@ -140,7 +140,7 @@
   apt:
     name: influxdb
     state: present
-      
+
 - name: Start and enable InfluxDB service
   service:
     name: influxdb
@@ -207,7 +207,7 @@
     state: restarted
     enabled: yes
 
-      
+
 - name: Installing Apache (HTTPD) and PHP
   apt:
     name:

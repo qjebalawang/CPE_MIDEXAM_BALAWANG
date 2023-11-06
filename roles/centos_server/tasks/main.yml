@@ -1,16 +1,16 @@
 ---
 - name: Adding Elasticsearch GPG key
   yum_repository:
-	name: Elasticsearch GPG Key
-	description: Elasticsearch RPM GPG Key
-	baseurl: https://artifacts.elastic.co/GPG-KEY-elasticsearch
-	gpgcheck: yes
-	state: present
+    name: Elasticsearch GPG Key
+    description: Elasticsearch RPM GPG Key
+    baseurl: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    gpgcheck: yes
+    state: present
 
 - name: Installing yum-utils (for yum-config-manager)
   yum:
-	name: yum-utils
-	state: present
+    name: yum-utils
+    state: present
 
 - name: Adding Elasticsearch Yum repository
   command: yum-config-manager --add-repo https://artifacts.elastic.co/packages/7.x/yum
@@ -20,172 +20,172 @@
 
 - name: Installing Elasticsearch
   yum:
-	name: elasticsearch
-	state: present
+    name: elasticsearch
+    state: present
 
 - name: Configuring Elasticsearch for outside access
   lineinfile:
-	dest: /etc/elasticsearch/elasticsearch.yml
-	regexp: '^(network.host:)'
-	line: 'network.host: 0.0.0.0'
+    dest: /etc/elasticsearch/elasticsearch.yml
+    regexp: '^(network.host:)'
+    line: 'network.host: 0.0.0.0'
 
 - name: Updating Elasticsearch port
   lineinfile:
-	dest: /etc/elasticsearch/elasticsearch.yml
-	regexp: '^(http.port:)'
-	line: 'http.port: 9200'
+    dest: /etc/elasticsearch/elasticsearch.yml
+    regexp: '^(http.port:)'
+    line: 'http.port: 9200'
 
 - name: Configuring cluster initial master nodes
   lineinfile:
-	dest: /etc/elasticsearch/elasticsearch.yml
-	regexp: '^(cluster.initial_master_nodes:)'
-	line: 'cluster.initial_master_nodes: ["{{ ansible_default_ipv4.address }}"]'
+    dest: /etc/elasticsearch/elasticsearch.yml
+    regexp: '^(cluster.initial_master_nodes:)'
+    line: 'cluster.initial_master_nodes: ["{{ ansible_default_ipv4.address }}"]'
 
 - name: Verifying Elasticsearch
   service:
-	name: elasticsearch
-	state: restarted
-	enabled: yes
+    name: elasticsearch
+    state: restarted
+    enabled: yes
 
 - name: Downloading Kibana
   get_url:
-	url: https://artifacts.elastic.co/downloads/kibana/kibana-8.4.3-x86_64.rpm
-	dest: /tmp/kibana-8.4.3-x86_64.rpm
+    url: https://artifacts.elastic.co/downloads/kibana/kibana-8.4.3-x86_64.rpm
+    dest: /tmp/kibana-8.4.3-x86_64.rpm
 
 - name: Installing Kibana
   yum:
-	name: /tmp/kibana-8.4.3-x86_64.rpm
-	state: latest
-	update_cache: yes
+    name: /tmp/kibana-8.4.3-x86_64.rpm
+    state: latest
+    update_cache: yes
 
 - name: Start Kibana
   service:
-	name: kibana
-	state: restarted
+    name: kibana
+    state: restarted
 
 - name: Downloading Logstash
   get_url:
-	url: https://artifacts.elastic.co/downloads/logstash/logstash-7.8.0.rpm
-	dest: /tmp/logstash-7.8.0.rpm
+    url: https://artifacts.elastic.co/downloads/logstash/logstash-7.8.0.rpm
+    dest: /tmp/logstash-7.8.0.rpm
 
 - name: installing logstash
   yum:
-	name: /tmp/logstash-7.8.0.rpm
-	state: present
+    name: /tmp/logstash-7.8.0.rpm
+    state: present
 
 - name: Starting Logstash
   service:
-	name: logstash
-	state: restarted
+    name: logstash
+    state: restarted
 
 - name: Installing InfluxDB and its dependencies
   yum:
-	name:
-  	- gcc
-  	- perl
-  	- wget
-  	- curl
-	state: latest
+    name:
+      - gcc
+      - perl
+      - wget
+      - curl
+    state: latest
 
 - name: Install InfluxDB repository key
   shell: rpm --import https://repos.influxdata.com/influxdb.key
 
 - name: Add InfluxDB YUM repository
   copy:
-	content: |
-  	[influxdb]
-  	name = InfluxDB Repository - RHEL $releasever
-  	baseurl = https://repos.influxdata.com/rhel/$releasever/$basearch/stable
-  	enabled = 1
-  	gpgcheck = 1
-  	gpgkey = https://repos.influxdata.com/influxdb.key
-	dest: /etc/yum.repos.d/influxdb.repo
+    content: |
+      [influxdb]
+      name = InfluxDB Repository - RHEL $releasever
+      baseurl = https://repos.influxdata.com/rhel/$releasever/$basearch/stable
+      enabled = 1
+      gpgcheck = 1
+      gpgkey = https://repos.influxdata.com/influxdb.key
+    dest: /etc/yum.repos.d/influxdb.repo
 
 - name: Install InfluxDB
   yum:
-	name: influxdb
-	state: present
+    name: influxdb
+    state: present
 
 - name: Start and enable InfluxDB service
   service:
-	name: influxdb
-	state: started
-	enabled: yes
+    name: influxdb
+    state: started
+    enabled: yes
 
 - name: Open InfluxDB port 8086 in the firewall
   firewalld:
-	service: influxdb
-	permanent: yes
-	state: enabled
+    service: influxdb
+    permanent: yes
+    state: enabled
 
 - name: Add Grafana YUM Repository
   yum_repository:
-	name: Grafana
-	description: Grafana RPM Repository
-	baseurl: https://packages.grafana.com/oss/rpm
-	gpgcheck: 1
-	gpgkey: https://packages.grafana.com/gpg.key
-	enabled: 1
+    name: Grafana
+    description: Grafana RPM Repository
+    baseurl: https://packages.grafana.com/oss/rpm
+    gpgcheck: 1
+    gpgkey: https://packages.grafana.com/gpg.key
+    enabled: 1
 
 - name: Install Grafana
   yum:
-	name: grafana
-	state: present
+    name: grafana
+    state: present
 
 - name: Start and enable Grafana service
   systemd:
-	name: grafana-server
-	enabled: yes
-	state: started
+    name: grafana-server
+    enabled: yes
+    state: started
 
 - name: Creating Prometheus Directory
   file:
-	path: /opt/prometheus
-	state: directory
+    path: /opt/prometheus
+    state: directory
 
 - name: Downloading Prometheus
   get_url:
-	url: https://github.com/prometheus/prometheus/releases/download/v2.47.2/prometheus-2.47.2.linux-amd64.tar.gz
-	dest: /opt/prometheus/prometheus-2.47.2.linux-amd64.tar.gz
+    url: https://github.com/prometheus/prometheus/releases/download/v2.47.2/prometheus-2.47.2.linux-amd64.tar.gz
+    dest: /opt/prometheus/prometheus-2.47.2.linux-amd64.tar.gz
 
 - name: Extracting Prometheus
   unarchive:
-	src: /opt/prometheus/prometheus-2.47.2.linux-amd64.tar.gz
-	dest: /opt/prometheus
-	remote_src: yes
+    src: /opt/prometheus/prometheus-2.47.2.linux-amd64.tar.gz
+    dest: /opt/prometheus
+    remote_src: yes
 
 - name: Creating Prometheus User
   user:
-	name: prometheus
-	system: yes
+    name: prometheus
+    system: yes
 
 - name: Start and Enable Prometheus
   service:
-	name: prometheus
-	state: started
-	enabled: yes
+    name: prometheus
+    state: started
+    enabled: yes
 
 - name: Installing Apache (HTTPD) and PHP
   yum:
-	name:
-  	- apache2
-  	- php
-  	- libapache2-mod-php
-	state: latest
+    name:
+      - apache2
+      - php
+      - libapache2-mod-php
+    state: latest
 
 - name: Installing MariaDB (MySQL) Server
   yum:
-	name: mariadb-server
-	state: latest
+    name: mariadb-server
+    state: latest
 
 - name: Starting and enabling Apache (HTTPD) service
   service:
-	name: apache2
-	state: started
-	enabled: yes
+    name: apache2
+    state: started
+    enabled: yes
 
 - name: Starting and enabling MariaDB (MySQL) service
   service:
-	name: mysql
-	state: started
-	enabled: yes
+    name: mysql
+    state: started
+    enabled: yes
